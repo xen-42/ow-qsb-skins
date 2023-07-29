@@ -18,20 +18,33 @@ public static class SkinReplacer
 	public const string CHERT = nameof(CHERT);
 	public const string GABBRO = nameof(GABBRO);
 	public const string FELDSPAR = nameof(FELDSPAR);
+	public const string NOMAI = nameof(NOMAI);
+
 	public const string PROTAGONIST = nameof(PROTAGONIST);
 
-	private static readonly Dictionary<string, GameObject> _skins = new Dictionary<string, GameObject>()
+	// TODO: make these functions not dictionaries
+	private static readonly Dictionary<string, GameObject> _suitedSkins = new()
 	{
 		{ CHERT, LoadPrefab("OW_Chert_Skin") },
 		{ GABBRO, LoadPrefab("OW_Gabbro_Skin") },
 		{ FELDSPAR, LoadPrefab("OW_Feldspar_Skin") },
+		{ NOMAI, LoadPrefab("OW_Solanum_Skin") }
 	};
 
-	private static readonly Dictionary<string, Func<string, string>> _boneMaps = new Dictionary<string, Func<string, string>>()
+	private static readonly Dictionary<string, Func<string, string>> _boneMaps = new()
 	{
 		{ CHERT, (name) => name.Replace("Chert_Skin_02:Child_Rig_V01:", PLAYER_PREFIX) },
 		{ GABBRO, (name) => name.Replace("gabbro_OW_V02:gabbro_rig_v01:", PLAYER_PREFIX) },
 		{ FELDSPAR, (name) => name.Replace("Feldspar_Skin:Short_Rig_V01:", PLAYER_PREFIX) },
+		{ NOMAI, (name) => name.Replace("Nomai_Rig_v01:", PLAYER_PREFIX).Replace("SHJnt", PLAYER_SUFFIX) }
+	};
+
+	private static readonly Dictionary<string, bool> _enableJetpack = new()
+	{
+		{ CHERT, true },
+		{ GABBRO, true },
+		{ FELDSPAR, true },
+		{ NOMAI, false }
 	};
 
 	public static SkinnedMeshRenderer[] ReplaceSkin(GameObject playerBody, string skinName, bool isRemote, bool isSuited)
@@ -42,8 +55,9 @@ public static class SkinReplacer
 			return null;
 		}
 
-		var skin = _skins.GetValueOrDefault(skinName.ToUpper());
+		var skin = _suitedSkins.GetValueOrDefault(skinName.ToUpper());
 		var map = _boneMaps.GetValueOrDefault(skinName.ToUpper());
+		var jetpack = _enableJetpack.GetValueOrDefault(skinName.ToUpper());
 
 		if (skin == default || map == default)
 		{
@@ -67,7 +81,7 @@ public static class SkinReplacer
 
 		var originalSkin = playerBody.transform.Find(root + "/" + child).gameObject;
 
-		return Swap(originalSkin, skin, map);
+		return Swap(originalSkin, skin, map, jetpack);
 	}
 
 	private static void ResetSkin(GameObject playerBody)
@@ -76,7 +90,7 @@ public static class SkinReplacer
 		var playerPrefab = QSBHelper.GetPlayerPrefab();
 		var suitRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/Traveller_Mesh_v01:Traveller_Geo").GetComponentsInChildren<SkinnedMeshRenderer>();
 		var suitlessRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player").GetComponentsInChildren<SkinnedMeshRenderer>();
-		
+
 		var originalMeshs = new Dictionary<string, Mesh>();
 		foreach (var skinnedMeshRenderer in suitRenderers.Concat(suitlessRenderers))
 		{
@@ -91,7 +105,7 @@ public static class SkinReplacer
 			}
 			else
 			{
-				DebugLogger.Write($"Couldn't find: [{skinnedMeshRenderer.gameObject.name}]");
+				// DebugLogger.Write($"Couldn't find: [{skinnedMeshRenderer.gameObject.name}]");
 			}
 		}
 	}
@@ -102,11 +116,13 @@ public static class SkinReplacer
 	/// 
 	/// Original is meant to be the actual game object of the skin we're replacing
 	/// </summary>
-	private static SkinnedMeshRenderer[] Swap(GameObject original, GameObject toCopy, Func<string, string> boneMap)
+	private static SkinnedMeshRenderer[] Swap(GameObject original, GameObject toCopy, Func<string, string> boneMap, bool jetpack)
 	{
 		var newModel = GameObject.Instantiate(toCopy, original.transform.parent.transform);
 		newModel.transform.localPosition = Vector3.zero;
 		newModel.SetActive(true);
+
+		original.transform.SearchInChildren("Traveller_Mesh_v01:Props_HEA_Jetpack").gameObject.SetActive(jetpack);
 
 		// Disappear existing mesh renderers
 		foreach (var skinnedMeshRenderer in original.GetComponentsInChildren<SkinnedMeshRenderer>())
@@ -135,8 +151,7 @@ public static class SkinReplacer
 				var newParent = original.transform.parent.SearchInChildren(matchingBone);
 				if (newParent == null)
 				{
-					// This should never happen in a release, this is just for testing with new models
-					DebugLogger.Write($"Couldn't find bone [{matchingBone}] matching [{bone}]");
+					// DebugLogger.Write($"Couldn't find bone [{matchingBone}] matching [{bone}]");
 				}
 				else
 				{

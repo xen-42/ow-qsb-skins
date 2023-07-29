@@ -4,7 +4,9 @@ using QSB.Animation.Player;
 using QSB.Messaging;
 using QSB.Player;
 using QSB.WorldSync;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -83,15 +85,19 @@ namespace QSBSkins
 
 		public void ChangePlayerSkin(PlayerInfo player, string skinName)
 		{
-			if (_skins.TryGetValue(player.PlayerId, out var skin))
+			var previousSkin = string.Empty;
+
+			// Revert old skin
+			if (_skins.TryGetValue(player.PlayerId, out var skin) && skin.skinName != null)
 			{
-				if (skin.skinName != skinName && skin.currentMesh != null)
+				if (skin.currentMesh != null)
 				{
 					foreach (var skinnedMeshRenderer in skin.currentMesh)
 					{
 						GameObject.Destroy(skinnedMeshRenderer);
 					}
 				}
+				previousSkin = skin.skinName;
 			}
 
 			if (player.IsLocalPlayer)
@@ -115,8 +121,28 @@ namespace QSBSkins
 				}
 			}
 
-			var mesh = SkinReplacer.ReplaceSkin(player.Body, skinName, !player.IsLocalPlayer, true);
-			_skins[player.PlayerId] = (skinName, mesh);
+			var suitedMesh = SkinReplacer.ReplaceSkin(player.Body, LocalSkin, !player.IsLocalPlayer, true);
+			_skins[player.PlayerId] = (skinName, suitedMesh);
+
+			if (!string.IsNullOrEmpty(previousSkin))
+			{
+				// Jank cleanup of old skin
+				try
+				{
+					var playerAnimationRoot = player.Body.GetComponentInChildren<PlayerAnimController>()?.gameObject ?? player.Body.GetComponentInChildren<PlayerHeadRotationSync>().gameObject;
+					foreach (MeshRenderer renderer in playerAnimationRoot.GetComponentsInChildren<MeshRenderer>())
+					{
+						if (transform.name.IndexOf(skin.skinName, StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							GameObject.Destroy(transform.gameObject);
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					DebugLogger.WriteError($"Couldn't delete remnants of old skin {skinName} on {player.Name}: {e}");
+				}
+			}
 		}
 	}
 }

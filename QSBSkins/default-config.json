@@ -5,7 +5,7 @@
 		"SuitSkin": {
 			"type": "selector",
 			"value": "Protagonist",
-			"options": [ "Protagonist", "Gabbro", "Feldspar", "Chert" ],
+			"options": [ "Protagonist", "Gabbro", "Feldspar", "Chert", "Nomai" ],
 			"title": "Suit skin"
 		}
 	}
