@@ -16,27 +16,29 @@ namespace QSBSkins
 
 		public string LocalSkin { get; private set; } = SkinReplacer.PROTAGONIST;
 
-		private void Awake()
+		public void Awake()
 		{
 			Instance = this;
 		}
 
-		private void Start()
+		public void Start()
 		{
 			_skins.Clear();
 			LoadManager.OnCompleteSceneLoad += OnCompleteSceneLoad;
+			QSBPlayerManager.OnAddPlayer += OnPlayerAdded;
 		}
 
 		public void OnDestroy()
 		{
 			LoadManager.OnCompleteSceneLoad -= OnCompleteSceneLoad;
+			QSBPlayerManager.OnAddPlayer -= OnPlayerAdded;
 		}
 
 		public override void Configure(IModConfig config)
 		{
 			base.Configure(config);
 
-			LocalSkin = config.GetSettingsValue<string>("Skin").ToUpperInvariant();
+			LocalSkin = config.GetSettingsValue<string>("SuitSkin").ToUpperInvariant();
 
 			var currentScene = SceneManager.GetActiveScene().name;
 			if (currentScene == "SolarSystem" || currentScene == "EyeOfTheUniverse")
@@ -51,6 +53,12 @@ namespace QSBSkins
 			{
 				Delay.FireInNUpdates(() => ChangePlayerSkin(QSBPlayerManager.LocalPlayer, LocalSkin), 30);
 			}
+		}
+
+		private void OnPlayerAdded(PlayerInfo player)
+		{
+			// Send them info about our skin
+			new ChangeSkinMessage(LocalSkin) { To = player.PlayerId }.Send();
 		}
 
 		public void ChangePlayerSkin(PlayerInfo player, string skinName)

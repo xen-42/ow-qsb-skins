@@ -2,11 +2,11 @@
 	"$schema": "https://raw.githubusercontent.com/ow-mods/owml/master/schemas/config_schema.json",
 	"enabled": true,
 	"settings": {
-		"Skin": {
+		"SuitSkin": {
 			"type": "selector",
 			"value": "Protagonist",
 			"options": [ "Protagonist", "Gabbro", "Feldspar", "Chert" ],
-			"title": "Replace your suit appearance"
+			"title": "Suit skin"
 		}
 	}
 }
