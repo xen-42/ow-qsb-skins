@@ -36,7 +36,7 @@ namespace QSBSkins
 		{
 			base.Configure(config);
 
-			LocalSkin = config.GetSettingsValue<string>("Skin");
+			LocalSkin = config.GetSettingsValue<string>("Skin").ToUpperInvariant();
 
 			var currentScene = SceneManager.GetActiveScene().name;
 			if (currentScene == "SolarSystem" || currentScene == "EyeOfTheUniverse")
@@ -71,7 +71,7 @@ namespace QSBSkins
 				new ChangeSkinMessage(skinName).Send();
 			}
 
-			var mesh = SkinReplacer.ReplaceSkin(player.Body, skinName, player.IsLocalPlayer, true);
+			var mesh = SkinReplacer.ReplaceSkin(player.Body, skinName, !player.IsLocalPlayer, true);
 			_skins[player.PlayerId] = (skinName, mesh);
 		}
 	}
