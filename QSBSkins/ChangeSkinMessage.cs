@@ -11,8 +11,7 @@ public class ChangeSkinMessage : QSBMessage<string>
 	{
 		if (From != QSBPlayerManager.LocalPlayerId)
 		{
-			var skinSelection = Data;
-			var player = QSBPlayerManager.GetPlayer(From);
+			QSBSkins.Instance.ChangePlayerSkin(QSBPlayerManager.GetPlayer(From), Data);
 		}
 	}
 }
