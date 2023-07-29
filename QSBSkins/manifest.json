@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/ow-mods/owml/master/schemas/manifest_schema.json",
   "filename": "QSBSkins.dll",
   "author": "xen",
-  "name": "QSBSkins",
+  "name": "Skins for QSB",
   "uniqueName": "xen.QSBSkins",
   "version": "0.1.0",
   "owmlVersion": "2.9.0",

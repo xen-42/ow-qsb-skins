@@ -1,10 +1,12 @@
-﻿using OWML.Common;
+﻿using HarmonyLib;
+using OWML.Common;
 using OWML.ModHelper;
 using QSB.Animation.Player;
 using QSB.Messaging;
 using QSB.Player;
 using QSB.WorldSync;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -25,6 +27,8 @@ namespace QSBSkins
 
 		public void Start()
 		{
+			Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
+
 			_skins.Clear();
 			LoadManager.OnCompleteSceneLoad += OnCompleteSceneLoad;
 			QSBPlayerManager.OnAddPlayer += OnPlayerAdded;
@@ -71,14 +75,25 @@ namespace QSBSkins
 			);
 		}
 
-		public void RefreshPlayerSkin(PlayerInfo player)
+		public void RefreshRemotePlayerHeadSync(PlayerInfo player, string skinName = null)
 		{
-			var skinName = SkinReplacer.PROTAGONIST;
-			if (_skins.TryGetValue(player.PlayerId, out var skin))
+			if (string.IsNullOrEmpty(skinName) && _skins.TryGetValue(player.PlayerId, out var skinInfo))
 			{
-				skinName = skin.skinName;
+				skinName = skinInfo.skinName;
 			}
-			ChangePlayerSkin(player, skinName);
+
+			// For remote Chert players we do not want their head rotation to sync (looks really bad with that helmet)
+			var headRotationSync = player.Body.GetComponentInChildren<PlayerHeadRotationSync>();
+
+			if (skinName == SkinReplacer.CHERT && player.SuitedUp)
+			{
+				headRotationSync.enabled = false;
+				headRotationSync.gameObject.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head).localRotation = Quaternion.identity;
+			}
+			else
+			{
+				headRotationSync.enabled = true;
+			}
 		}
 
 		public void ChangePlayerSkin(PlayerInfo player, string skinName)
@@ -101,18 +116,7 @@ namespace QSBSkins
 			}
 			else
 			{
-				// For remote Chert players we do not want their head rotation to sync (looks really bad with that helmet)
-				var headRotationSync = player.Body.GetComponentInChildren<PlayerHeadRotationSync>();
-
-				if (skinName == SkinReplacer.CHERT && player.SuitedUp)
-				{
-					headRotationSync.enabled = false;
-					headRotationSync.gameObject.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head).localRotation = Quaternion.identity;
-				}
-				else
-				{
-					headRotationSync.enabled = true;
-				}
+				RefreshRemotePlayerHeadSync(player, skinName);
 			}
 
 			var mesh = SkinReplacer.ReplaceSkin(player.Body, skinName, !player.IsLocalPlayer, true);

@@ -1,11 +1,6 @@
 ﻿using HarmonyLib;
 using QSB.Animation.Player.Messages;
 using QSB.Player;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace QSBSkins;
 
@@ -19,8 +14,7 @@ public static class PlayerSuitMessagePatch
 		var player = QSBPlayerManager.GetPlayer(__instance.From);
 		if (player.IsReady)
 		{
-			// Relevant for enabling/disabling special Chert behaviour
-			QSBSkins.Instance.RefreshPlayerSkin(player);
+			QSBSkins.Instance.RefreshRemotePlayerHeadSync(player);
 		}
 	}
 }
