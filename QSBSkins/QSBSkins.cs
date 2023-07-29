@@ -2,6 +2,7 @@
 using OWML.ModHelper;
 using QSB.Messaging;
 using QSB.Player;
+using QSB.WorldSync;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -51,14 +52,22 @@ namespace QSBSkins
 		{
 			if (loadScene == OWScene.SolarSystem || loadScene == OWScene.EyeOfTheUniverse)
 			{
-				Delay.FireInNUpdates(() => ChangePlayerSkin(QSBPlayerManager.LocalPlayer, LocalSkin), 30);
+				// Wait for QSB to finish connecting and syncing first
+				Delay.RunWhen(
+					() => QSBWorldSync.AllObjectsReady,
+					() => ChangePlayerSkin(QSBPlayerManager.LocalPlayer, LocalSkin)
+				);
 			}
 		}
 
 		private void OnPlayerAdded(PlayerInfo player)
 		{
 			// Send them info about our skin
-			new ChangeSkinMessage(LocalSkin) { To = player.PlayerId }.Send();
+			// Make sure they've finished loading in first
+			Delay.RunWhen(
+				() => player.Body != null,
+				() => new ChangeSkinMessage(LocalSkin) { To = player.PlayerId }.Send()
+			);
 		}
 
 		public void ChangePlayerSkin(PlayerInfo player, string skinName)
@@ -76,6 +85,7 @@ namespace QSBSkins
 
 			if (player.IsLocalPlayer)
 			{
+				// Immediately tell all other clients to alter our skin
 				new ChangeSkinMessage(skinName).Send();
 			}
 
