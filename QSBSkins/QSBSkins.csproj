@@ -26,9 +26,14 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
   </ItemGroup>
-	<ItemGroup>
+	<ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
 		<Reference Include="QSB">
 			<HintPath>$(OuterWildsModsDirectory)\Raicuparta.QuantumSpaceBuddies\QSB.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup Condition=" '$(Configuration)' != 'Debug' ">
+		<Reference Include="lib\*.dll">
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>

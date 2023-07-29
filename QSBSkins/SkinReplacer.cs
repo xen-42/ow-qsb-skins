@@ -15,24 +15,35 @@ public static class SkinReplacer
 	public const string PLAYER_PREFIX = "Traveller_Rig_v01:Traveller_";
 	public const string PLAYER_SUFFIX = "_Jnt";
 
+	public const string CHERT = nameof(CHERT);
+	public const string GABBRO = nameof(GABBRO);
+	public const string FELDSPAR = nameof(FELDSPAR);
+	public const string PROTAGONIST = nameof(PROTAGONIST);
+
 	private static readonly Dictionary<string, GameObject> _skins = new Dictionary<string, GameObject>()
 	{
-		{ "Chert", LoadPrefab("OW_Chert_Skin") },
-		{ "Gabbro", LoadPrefab("OW_Gabbro_Skin") },
-		{ "Feldspar", LoadPrefab("OW_Feldspar_Skin") },
+		{ CHERT, LoadPrefab("OW_Chert_Skin") },
+		{ GABBRO, LoadPrefab("OW_Gabbro_Skin") },
+		{ FELDSPAR, LoadPrefab("OW_Feldspar_Skin") },
 	};
 
 	private static readonly Dictionary<string, Func<string, string>> _boneMaps = new Dictionary<string, Func<string, string>>()
 	{
-		{ "Chert", (name) => name.Replace("Chert_Skin_02:Child_Rig_V01:", PLAYER_PREFIX) },
-		{ "Gabbro", (name) => name.Replace("gabbro_OW_V02:gabbro_rig_v01:", PLAYER_PREFIX) },
-		{ "Feldspar", (name) => name.Replace("Feldspar_Skin:Short_Rig_V01:", PLAYER_PREFIX) },
+		{ CHERT, (name) => name.Replace("Chert_Skin_02:Child_Rig_V01:", PLAYER_PREFIX) },
+		{ GABBRO, (name) => name.Replace("gabbro_OW_V02:gabbro_rig_v01:", PLAYER_PREFIX) },
+		{ FELDSPAR, (name) => name.Replace("Feldspar_Skin:Short_Rig_V01:", PLAYER_PREFIX) },
 	};
 
 	public static SkinnedMeshRenderer[] ReplaceSkin(GameObject playerBody, string skinName, bool isRemote, bool isSuited)
 	{
-		var skin = _skins.GetValueOrDefault(skinName);
-		var map = _boneMaps.GetValueOrDefault(skinName);
+		if (skinName.ToUpper() == PROTAGONIST)
+		{
+			ResetSkin(playerBody);
+			return null;
+		}
+
+		var skin = _skins.GetValueOrDefault(skinName.ToUpper());
+		var map = _boneMaps.GetValueOrDefault(skinName.ToUpper());
 
 		if (skin == default || map == default)
 		{
@@ -59,19 +70,20 @@ public static class SkinReplacer
 		return Swap(originalSkin, skin, map);
 	}
 
-	public static void ResetSkin(GameObject playerBody)
+	private static void ResetSkin(GameObject playerBody)
 	{
 		// Maybe you'll want to cache this dictionary
 		var playerPrefab = QSBHelper.GetPlayerPrefab();
 		var suitRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/Traveller_Mesh_v01:Traveller_Geo").GetComponentsInChildren<SkinnedMeshRenderer>();
 		var suitlessRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player").GetComponentsInChildren<SkinnedMeshRenderer>();
+		
 		var originalMeshs = new Dictionary<string, Mesh>();
 		foreach (var skinnedMeshRenderer in suitRenderers.Concat(suitlessRenderers))
 		{
 			originalMeshs.Add(skinnedMeshRenderer.gameObject.name, skinnedMeshRenderer.sharedMesh);
 		}
 
-		foreach (var skinnedMeshRenderer in playerBody.GetComponentsInChildren<SkinnedMeshRenderer>())
+		foreach (var skinnedMeshRenderer in playerBody.GetComponentsInChildren<SkinnedMeshRenderer>(true))
 		{
 			if (originalMeshs.ContainsKey(skinnedMeshRenderer.gameObject.name))
 			{
