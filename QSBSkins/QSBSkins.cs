@@ -1,5 +1,6 @@
 ﻿using OWML.Common;
 using OWML.ModHelper;
+using QSB.Animation.Player;
 using QSB.Messaging;
 using QSB.Player;
 using QSB.WorldSync;
@@ -70,6 +71,16 @@ namespace QSBSkins
 			);
 		}
 
+		public void RefreshPlayerSkin(PlayerInfo player)
+		{
+			var skinName = SkinReplacer.PROTAGONIST;
+			if (_skins.TryGetValue(player.PlayerId, out var skin))
+			{
+				skinName = skin.skinName;
+			}
+			ChangePlayerSkin(player, skinName);
+		}
+
 		public void ChangePlayerSkin(PlayerInfo player, string skinName)
 		{
 			if (_skins.TryGetValue(player.PlayerId, out var skin))
@@ -87,6 +98,21 @@ namespace QSBSkins
 			{
 				// Immediately tell all other clients to alter our skin
 				new ChangeSkinMessage(skinName).Send();
+			}
+			else
+			{
+				// For remote Chert players we do not want their head rotation to sync (looks really bad with that helmet)
+				var headRotationSync = player.Body.GetComponentInChildren<PlayerHeadRotationSync>();
+
+				if (skinName == SkinReplacer.CHERT && player.SuitedUp)
+				{
+					headRotationSync.enabled = false;
+					headRotationSync.gameObject.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head).localRotation = Quaternion.identity;
+				}
+				else
+				{
+					headRotationSync.enabled = true;
+				}
 			}
 
 			var mesh = SkinReplacer.ReplaceSkin(player.Body, skinName, !player.IsLocalPlayer, true);
