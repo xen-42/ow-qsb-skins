@@ -76,13 +76,14 @@ public static class SkinReplacer
 		var playerPrefab = QSBHelper.GetPlayerPrefab();
 		var suitRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/Traveller_Mesh_v01:Traveller_Geo").GetComponentsInChildren<SkinnedMeshRenderer>();
 		var suitlessRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player").GetComponentsInChildren<SkinnedMeshRenderer>();
+		
 		var originalMeshs = new Dictionary<string, Mesh>();
 		foreach (var skinnedMeshRenderer in suitRenderers.Concat(suitlessRenderers))
 		{
 			originalMeshs.Add(skinnedMeshRenderer.gameObject.name, skinnedMeshRenderer.sharedMesh);
 		}
 
-		foreach (var skinnedMeshRenderer in playerBody.GetComponentsInChildren<SkinnedMeshRenderer>())
+		foreach (var skinnedMeshRenderer in playerBody.GetComponentsInChildren<SkinnedMeshRenderer>(true))
 		{
 			if (originalMeshs.ContainsKey(skinnedMeshRenderer.gameObject.name))
 			{
