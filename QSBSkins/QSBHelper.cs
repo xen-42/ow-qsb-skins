@@ -13,4 +13,7 @@ public static class QSBHelper
 	{
 		return typeof(RemotePlayerCreation).GetMethod("GetPrefab", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null) as GameObject;
 	}
+
+	private static IQSBAPI _api;
+	public static IQSBAPI API => _api ??= QSBSkins.Instance.ModHelper.Interaction.TryGetModApi<IQSBAPI>("Raicuparta.QuantumSpaceBuddies");
 }

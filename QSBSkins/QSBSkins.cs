@@ -1,8 +1,8 @@
 ﻿using HarmonyLib;
 using OWML.Common;
 using OWML.ModHelper;
+using QSB;
 using QSB.Animation.Player;
-using QSB.Messaging;
 using QSB.Player;
 using QSB.WorldSync;
 using System.Collections.Generic;
@@ -20,6 +20,8 @@ namespace QSBSkins
 
 		public string LocalSkin { get; private set; } = SkinReplacer.PROTAGONIST;
 
+		public static string ChangeSkinMessage => nameof(ChangeSkinMessage);
+
 		public void Awake()
 		{
 			Instance = this;
@@ -32,6 +34,9 @@ namespace QSBSkins
 			_skins.Clear();
 			LoadManager.OnCompleteSceneLoad += OnCompleteSceneLoad;
 			QSBPlayerManager.OnAddPlayer += OnPlayerAdded;
+
+			QSBHelper.API.RegisterHandler<string>(ChangeSkinMessage, OnReceiveChangeSkinMessage);
+			QSBCore.RegisterNotRequiredForAllPlayers(this);
 		}
 
 		public void OnDestroy()
@@ -71,7 +76,7 @@ namespace QSBSkins
 			// Make sure they've finished loading in first
 			Delay.RunWhen(
 				() => player.Body != null,
-				() => new ChangeSkinMessage(LocalSkin) { To = player.PlayerId }.Send()
+				() => SendChangeSkinMessage(LocalSkin, to: player.PlayerId)
 			);
 		}
 
@@ -96,6 +101,19 @@ namespace QSBSkins
 			}
 		}
 
+		public void OnReceiveChangeSkinMessage(uint From, string Data)
+		{
+			Delay.RunWhen(
+			   () => QSBPlayerManager.GetPlayer(From).Body != null,
+			   () => Instance.ChangePlayerSkin(QSBPlayerManager.GetPlayer(From), Data)
+			);
+		}
+
+		public static void SendChangeSkinMessage(string skin, uint to = uint.MaxValue)
+		{
+			QSBHelper.API.SendMessage(ChangeSkinMessage, skin, to: to);
+		}
+
 		public void ChangePlayerSkin(PlayerInfo player, string skinName)
 		{
 			if (_skins.TryGetValue(player.PlayerId, out var skin))
@@ -112,7 +130,7 @@ namespace QSBSkins
 			if (player.IsLocalPlayer)
 			{
 				// Immediately tell all other clients to alter our skin
-				new ChangeSkinMessage(skinName).Send();
+				SendChangeSkinMessage(skinName);
 			}
 			else
 			{
