@@ -4,7 +4,7 @@
   "author": "xen",
   "name": "Skins for QSB",
   "uniqueName": "xen.QSBSkins",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "owmlVersion": "2.9.0",
   "dependencies": [ "Raicuparta.QuantumSpaceBuddies" ],
   "donateLink": "https://www.patreon.com/xen42"
