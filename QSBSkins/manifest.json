@@ -6,5 +6,6 @@
   "uniqueName": "xen.QSBSkins",
   "version": "0.2.0",
   "owmlVersion": "2.9.0",
-  "dependencies": [ "Raicuparta.QuantumSpaceBuddies" ]
+  "dependencies": [ "Raicuparta.QuantumSpaceBuddies" ],
+  "donateLink": "https://www.patreon.com/xen42"
 }
