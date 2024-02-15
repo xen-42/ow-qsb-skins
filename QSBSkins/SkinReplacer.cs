@@ -37,60 +37,61 @@ public static class SkinReplacer
 
 	public static SkinnedMeshRenderer[] ReplaceSkin(GameObject playerBody, string skinName, bool isRemote, bool isSuited)
 	{
-		if (skinName.ToUpper() == PROTAGONIST)
+		var isDefaultSkin = skinName.ToUpper() == PROTAGONIST;
+
+		// Turn off helmet animator
+		if (isRemote)
+		{
+			// Enable/Disable helmet animator (only show on default skin)
+			var helmetAnimator = playerBody.GetComponentInChildren<HelmetAnimator>(true);
+			helmetAnimator.FakeHead.GetComponent<SkinnedMeshRenderer>().forceRenderingOff = !isDefaultSkin;
+			helmetAnimator.FakeHelmet.GetComponent<SkinnedMeshRenderer>().forceRenderingOff = !isDefaultSkin;
+		}
+
+		if (isDefaultSkin)
 		{
 			ResetSkin(playerBody);
 			return null;
 		}
-
-		var skin = _skins.GetValueOrDefault(skinName.ToUpper());
-		var map = _boneMaps.GetValueOrDefault(skinName.ToUpper());
-
-		if (skin == default || map == default)
+		else
 		{
-			DebugLogger.WriteError($"SKIN [{skinName}] WASN'T FOUND");
-			return null;
+			var skin = _skins.GetValueOrDefault(skinName.ToUpper());
+			var map = _boneMaps.GetValueOrDefault(skinName.ToUpper());
+
+			if (skin == default || map == default)
+			{
+				DebugLogger.WriteError($"SKIN [{skinName}] WASN'T FOUND");
+				return null;
+			}
+
+			if (playerBody == null)
+			{
+				DebugLogger.WriteError("TRIED TO REPLACE PLAYER SKIN BUT PLAYER BODY IS NULL");
+			}
+
+			// Returns the skinned mesh renderer so if you switch to a different skin you can destroy the old one
+			var root = isRemote ?
+				"REMOTE_Traveller_HEA_Player_v2" :
+				"Traveller_HEA_Player_v2";
+
+			var child = isSuited ?
+				"Traveller_Mesh_v01:Traveller_Geo" :
+				"player_mesh_noSuit:Traveller_HEA_Player";
+
+			var originalSkin = playerBody.transform.Find(root + "/" + child).gameObject;
+
+			return Swap(originalSkin, skin, map);
 		}
-
-		if (playerBody == null)
-		{
-			DebugLogger.WriteError("TRIED TO REPLACE PLAYER SKIN BUT PLAYER BODY IS NULL");
-		}
-
-		// Returns the skinned mesh renderer so if you switch to a different skin you can destroy the old one
-		var root = isRemote ?
-			"REMOTE_Traveller_HEA_Player_v2" :
-			"Traveller_HEA_Player_v2";
-
-		var child = isSuited ?
-			"Traveller_Mesh_v01:Traveller_Geo" :
-			"player_mesh_noSuit:Traveller_HEA_Player";
-
-		var originalSkin = playerBody.transform.Find(root + "/" + child).gameObject;
-
-		// Turn off helmet animator
-		if (isRemote) 
-		{
-			var helmetAnimator = playerBody.transform.Find("REMOTE_Traveller_HEA_Player_v2").GetComponent<HelmetAnimator>();
-			helmetAnimator.enabled = false;
-			helmetAnimator.FakeHelmet.gameObject.SetActive(false);
-			helmetAnimator.FakeHead.gameObject.SetActive(false);
-		}
-
-		return Swap(originalSkin, skin, map);
 	}
 
 	private static void ResetSkin(GameObject playerBody)
 	{
+		DebugLogger.WriteError("Resetting player skin");
+
 		// Maybe you'll want to cache this dictionary
 		var playerPrefab = QSBHelper.GetPlayerPrefab();
 		var suitRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/Traveller_Mesh_v01:Traveller_Geo").GetComponentsInChildren<SkinnedMeshRenderer>();
 		var suitlessRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player").GetComponentsInChildren<SkinnedMeshRenderer>();
-		
-		// Re-enable helmet animator
-		var helmetAnimator = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2").GetComponent<HelmetAnimator>();
-		helmetAnimator.enabled = true;
-		helmetAnimator.SetHelmetInstant(helmetAnimator.SuitGroup.activeSelf);
 
 		var originalMeshs = new Dictionary<string, Mesh>();
 		foreach (var skinnedMeshRenderer in suitRenderers.Concat(suitlessRenderers))
