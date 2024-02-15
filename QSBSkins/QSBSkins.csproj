@@ -33,7 +33,8 @@
 		</Reference>
 	</ItemGroup>
 	<ItemGroup Condition=" '$(Configuration)' != 'Debug' ">
-		<Reference Include="lib\*.dll">
+		<Reference Include="QSB">
+			<HintPath>lib\QSB.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
