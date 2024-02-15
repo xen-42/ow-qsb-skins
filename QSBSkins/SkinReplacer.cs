@@ -1,4 +1,5 @@
-﻿using System;
+﻿using QSB.Animation.Player;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -67,6 +68,15 @@ public static class SkinReplacer
 
 		var originalSkin = playerBody.transform.Find(root + "/" + child).gameObject;
 
+		// Turn off helmet animator
+		if (isRemote) 
+		{
+			var helmetAnimator = playerBody.transform.Find("REMOTE_Traveller_HEA_Player_v2").GetComponent<HelmetAnimator>();
+			helmetAnimator.enabled = false;
+			helmetAnimator.FakeHelmet.gameObject.SetActive(false);
+			helmetAnimator.FakeHead.gameObject.SetActive(false);
+		}
+
 		return Swap(originalSkin, skin, map);
 	}
 
@@ -77,6 +87,11 @@ public static class SkinReplacer
 		var suitRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/Traveller_Mesh_v01:Traveller_Geo").GetComponentsInChildren<SkinnedMeshRenderer>();
 		var suitlessRenderers = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player").GetComponentsInChildren<SkinnedMeshRenderer>();
 		
+		// Re-enable helmet animator
+		var helmetAnimator = playerPrefab.transform.Find("REMOTE_Traveller_HEA_Player_v2").GetComponent<HelmetAnimator>();
+		helmetAnimator.enabled = true;
+		helmetAnimator.SetHelmetInstant(helmetAnimator.SuitGroup.activeSelf);
+
 		var originalMeshs = new Dictionary<string, Mesh>();
 		foreach (var skinnedMeshRenderer in suitRenderers.Concat(suitlessRenderers))
 		{
